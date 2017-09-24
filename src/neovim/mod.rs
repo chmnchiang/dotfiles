@@ -19,7 +19,7 @@ impl ::Installer for Neovim {
 
     #[cfg(target_os = "linux")]
     fn run() {
-        let home_dir = env::var("HOME").expect("Env var $HOME not set.");
+        let home_dir = env::var("HOME").expect("env var $HOME not set.");
         let home_dir = Path::new(&home_dir).to_owned();
         
         let mut vim_dir = home_dir.clone();
