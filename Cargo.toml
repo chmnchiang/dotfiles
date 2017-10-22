@@ -5,4 +5,9 @@ version = "0.1.0"
 
 [dependencies]
 clap = "2.26.2"
+error-chain = "0.11.0"
 git2 = "0.6.8"
+slog = "2.0.12"
+slog-async = "2.1.0"
+slog-scope = "4.0.0"
+slog-term = "2.2.0"

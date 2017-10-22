@@ -20,7 +20,6 @@ if dein#load_state(g:plugin_base_path)
 
     " Nerdtree (file tree navigator)
     call dein#add('scrooloose/nerdtree')
-    let NERDTreeShowHidden=1
 
     call dein#add('scrooloose/nerdcommenter')
     
@@ -42,14 +41,17 @@ if dein#load_state(g:plugin_base_path)
     call dein#add('rust-lang/rust.vim', {'on_ft': 'rust'})
     call dein#add('hdima/python-syntax')
     call dein#add('hynek/vim-python-pep8-indent')
-
+            
     call dein#end()
     call dein#save_state()
 endif
 
 if dein#check_install()
     call dein#install()
-endif"}}}
+endif
+
+"autocmd VimEnter * call dein#call_hook('post_source')
+"}}}
 
 " Basic settings {{{
 filetype plugin indent on
@@ -79,13 +81,18 @@ set hidden
 set laststatus=2
 " Include the current path
 set path+=$PWD/**
-set conceallevel=0"}}}
+set conceallevel=0
 
-" Fold settings {{{
 set foldenable
 " Marker couldn't be use in plain text, but I bet you wouldn't
 " need to fold there.
 set foldmethod=marker
+
+" Needed by IndentLine
+set conceallevel=2
+set concealcursor=nc
+" Conceal sucks at json files...
+autocmd Filetype json setl conceallevel=0
 "}}}
 
 " Key settings {{{
@@ -128,6 +135,12 @@ nnoremap <silent> <leader>rn :call LanguageClient_textDocument_rename()<CR>
 " Airline
 let g:airline_powerline_fonts = 1
 let g:airline#extensions#tabline#enabled = 1
+
+" NERDTree
+let NERDTreeShowHidden = 1
+
+" Indent Line
+let g:indentLine_setConceal = 0
 
 " Language server
 let g:LanguageClient_serverCommands = {
