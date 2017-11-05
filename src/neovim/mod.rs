@@ -18,8 +18,8 @@ mod error {
     }
 }
 
-const DEIN_URL: &'static str = "https://github.com/Shougo/dein.vim";
-pub struct Neovim { }
+const DEIN_URL: &str = "https://github.com/Shougo/dein.vim";
+pub struct Neovim {}
 
 impl Neovim {
     #[cfg(target_os = "linux")]
@@ -27,7 +27,7 @@ impl Neovim {
         let logger = slog_scope::logger();
 
         let home_dir = Path::new(&get_home_var()).to_owned();
-        
+
         let mut vim_dir = home_dir.clone();
         vim_dir.push(".vim");
 
@@ -52,10 +52,11 @@ impl Neovim {
         dotfiles_nvim_dir.push("dotfiles");
         dotfiles_nvim_dir.push("nvim");
 
-        os::unix::fs::symlink(&dotfiles_nvim_dir, &nvim_dir)
-            .expect(&format!("Create symlink {} -> {} failed",
-                            dotfiles_nvim_dir.to_string_lossy(),
-                            nvim_dir.to_string_lossy()));
+        os::unix::fs::symlink(&dotfiles_nvim_dir, &nvim_dir).expect(&format!(
+            "Create symlink {} -> {} failed",
+            dotfiles_nvim_dir.to_string_lossy(),
+            nvim_dir.to_string_lossy()
+        ));
 
         Ok(())
     }
@@ -92,13 +93,13 @@ impl Runner for Neovim {
     fn run(argm: &ArgMatches) -> Result<(), Self::Error> {
 
         match argm.subcommand_name().expect("No subcommand found") {
-            "install" => { 
+            "install" => {
                 Self::install()?;
-            },
-            "clean" => { 
+            }
+            "clean" => {
                 Self::clean()?;
-            },
-            _ => unreachable!()
+            }
+            _ => unreachable!(),
         };
         Ok(())
     }

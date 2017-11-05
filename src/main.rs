@@ -30,9 +30,11 @@ trait Runner {
 
     fn run_unwrap(argm: &ArgMatches) {
         let logger = slog_scope::logger();
-        Self::run(argm).map_err(|error| {
-            error!(logger, "{}", error);
-        }).unwrap();
+        Self::run(argm)
+            .map_err(|error| {
+                error!(logger, "{}", error);
+            })
+            .unwrap();
     }
 }
 
@@ -59,7 +61,7 @@ fn main() {
     let matches = app.get_matches();
 
     match matches.subcommand_name() {
-        Some(subc) => { 
+        Some(subc) => {
             println!("Running neovim config installer...");
             let subm = matches.subcommand_matches(subc).unwrap();
 
@@ -69,7 +71,9 @@ fn main() {
                 _ => unreachable!(),
             };
             func(subm);
-        },
-        None => { build_cli().print_help().unwrap(); },
+        }
+        None => {
+            build_cli().print_help().unwrap();
+        }
     };
 }

@@ -4,12 +4,7 @@ use std::fs::DirBuilder;
 use std::io;
 
 pub fn ensure_dir<T: AsRef<Path>>(path: T) -> io::Result<()> {
-    DirBuilder::new()
-        .recursive(true)
-        .create(&path)
-        //.expect(
-            //&format!("Ensure dir {} failed", path.as_ref().to_string_lossy())
-        //);
+    DirBuilder::new().recursive(true).create(&path)
 }
 
 pub fn get_home_var() -> String {

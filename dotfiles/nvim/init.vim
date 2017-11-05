@@ -93,6 +93,9 @@ set conceallevel=2
 set concealcursor=nc
 " Conceal sucks at json files...
 autocmd Filetype json setl conceallevel=0
+
+" Don't show the annoying preview window
+set completeopt-=preview
 "}}}
 
 " Key settings {{{
@@ -144,7 +147,8 @@ let g:indentLine_setConceal = 0
 
 " Language server
 let g:LanguageClient_serverCommands = {
-    \ 'rust': ['rustup', 'run', 'nightly', 'rls'],
+    \ 'rust': ['rls'],
+    \ 'python': ['pyls'],
     \ }
 let g:LanguageClient_autoStart = 1
 

@@ -52,10 +52,10 @@ impl Runner for Me {
 
     fn run(argm: &ArgMatches) -> Result<(), Self::Error> {
         match argm.subcommand_name().expect("No subcommand found") {
-            "install" => { 
+            "install" => {
                 Self::install()?;
-            },
-            _ => unreachable!()
+            }
+            _ => unreachable!(),
         };
         Ok(())
     }
