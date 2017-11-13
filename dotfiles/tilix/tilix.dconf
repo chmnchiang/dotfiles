@@ -1,0 +1,30 @@
+[/]
+warn-vte-config-issue=false
+prompt-on-close=true
+quake-height-percent=90
+window-state=132
+
+[keybindings]
+session-switch-to-terminal-8='disabled'
+session-switch-to-terminal-9='disabled'
+win-view-sidebar='Menu'
+session-switch-to-terminal-0='disabled'
+session-switch-to-terminal-1='disabled'
+session-switch-to-terminal-2='disabled'
+session-switch-to-terminal-3='disabled'
+session-switch-to-terminal-4='disabled'
+session-switch-to-terminal-5='disabled'
+session-switch-to-terminal-6='disabled'
+session-switch-to-terminal-7='disabled'
+
+[profiles/2b7c4080-0ddd-46c5-8f23-563fd3ba789d]
+foreground-color='#E6E6F0F0E2E2'
+visible-name='Default'
+palette=['#222222222222', '#FFFF00000000', '#6262E0E00909', '#FFFFB9B90000', '#22228D8DDEDE', '#6C6C4242A5A5', '#0000D7D7EBEB', '#D3D3D7D7CFCF', '#444444444444', '#FFFF27273E3E', '#7D7DD8D83434', '#FFFFD1D14141', '#10109191F2F2', '#9A9A5F5FEBEB', '#1616F0F0E2E2', '#EEEEEEEEECEC']
+custom-command='tmux'
+use-system-font=false
+use-custom-command=false
+use-theme-colors=false
+font='Source Code Pro Medium 15'
+background-color='#0B0B0B0B0B0B'
+background-transparency-percent=8

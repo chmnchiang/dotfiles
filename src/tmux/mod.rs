@@ -1,10 +1,7 @@
 use clap::{ArgMatches, SubCommand, App};
 
-use git2::Repository;
 use Runner;
 use utils;
-use utils::path::ensure_parent_dir;
-use slog_scope;
 
 mod errors {
     use utils;
@@ -13,39 +10,23 @@ mod errors {
         links {
             Path(utils::path::Error, utils::path::ErrorKind);
         }
-        foreign_links {
-            Io(::std::io::Error);
-            Git(::git2::Error);
-        }
     }
 }
 
 use self::errors::*;
 
-const DEIN_URL: &str = "https://github.com/Shougo/dein.vim";
+pub struct Tmux {}
 
-pub struct Neovim {}
-
-impl Neovim {
+impl Tmux {
     #[cfg(target_os = "linux")]
     fn install() -> Result<()> {
-        let logger = slog_scope::logger();
 
         let home_dir = utils::path::get_home_dir()?;
+        let tmux_conf_path = home_dir.join(".tmux.conf");
 
-        let dein_path = home_dir.join(".vim/dein.vim");
+        let dotfiles_tmux_conf_path = home_dir.join(".config/dotfiles/dotfiles/tmux/tmux.conf");
 
-        ensure_parent_dir(&dein_path)?;
-
-        info!(logger, "cloning {} to {}", DEIN_URL, dein_path.to_string_lossy());
-        Repository::clone(DEIN_URL, &dein_path)?;
-
-        let nvim_config_dir = home_dir.join(".config/nvim");
-        ensure_parent_dir(&nvim_config_dir)?;
-
-        let dotfiles_nvim_dir = home_dir.join(".config/dotfiles/dotfiles/nvim");
-
-        utils::path::symlink(&dotfiles_nvim_dir, &nvim_config_dir)?;
+        utils::path::symlink(&dotfiles_tmux_conf_path, &tmux_conf_path)?;
 
         Ok(())
     }
@@ -57,25 +38,22 @@ impl Neovim {
 }
 
 
-impl Neovim {
+impl Tmux {
     #[cfg(target_os = "linux")]
     fn clean() -> Result<()> {
         let home_dir = utils::path::get_home_dir()?;
-        let dein_dir = home_dir.join(".vim/dein.vim");
-        utils::path::ensure_clean(dein_dir)?;
-
-        let nvim_dir = home_dir.join(".config/nvim");
-        utils::path::ensure_clean(nvim_dir)?;
+        let tmux_conf_path = home_dir.join(".tmux.conf");
+        utils::path::ensure_clean(tmux_conf_path)?;
         Ok(())
     }
 }
 
-impl Runner for Neovim {
+impl Runner for Tmux {
     type Error = Error;
 
     fn build_cli() -> App<'static, 'static> {
-        SubCommand::with_name("neovim")
-            .about("Setting configuration files of neovim")
+        SubCommand::with_name("tmux")
+            .about("Setting configuration files of tmux")
             .subcommand(SubCommand::with_name("install"))
             .subcommand(SubCommand::with_name("clean"))
     }

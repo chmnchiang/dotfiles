@@ -1,56 +1,62 @@
 use std::env;
-use std::path::PathBuf;
 use std::fs;
 use std::os;
 use clap::{ArgMatches, SubCommand, App};
 
 use Runner;
-use utils::*;
+use utils;
+use utils::path::ensure_parent_dir;
 
-mod error {
+mod errors {
+    use utils;
+
     error_chain!{
         foreign_links {
             Io(::std::io::Error);
         }
+        links {
+            Path(utils::path::Error, utils::path::ErrorKind);
+        }
     }
 }
+
+use self::errors::*;
 
 pub struct Me {}
 
 impl Me {
     #[cfg(target_os = "linux")]
-    fn install() -> error::Result<()> {
-        let home_var = get_home_var();
-        let config_dir: PathBuf = [&home_var, ".config"].iter().collect();
-        ensure_dir(&config_dir)?;
-        let mut target_dir = config_dir;
-        target_dir.push("dotfiles");
+    fn install() -> Result<()> {
+        let home_dir = utils::path::get_home_dir()?;
+        let target_dir = home_dir.join(".config/dotfiles");
+
+        ensure_parent_dir(&target_dir)?;
+
         let cur_dir = env::current_dir()?;
 
         fs::rename(&cur_dir, &target_dir)?;
 
-        let bin_dir = {
-            let mut dir = target_dir;
-            dir.push("target/release/dotfiles");
-            dir
-        };
-        let bin_symlink_dir: PathBuf = [&home_var, ".local", "bin", "dotfl"].iter().collect();
-        os::unix::fs::symlink(&bin_dir, &bin_symlink_dir)?;
+        let bin_path = target_dir.join("target/release/dotfiles");
+        
+        let bin_symlink_path = home_dir.join(".local/bin/dotfl");
+        ensure_parent_dir(&bin_symlink_path)?;
+
+        os::unix::fs::symlink(&bin_path, &bin_symlink_path)?;
 
         Ok(())
     }
 }
 
 impl Runner for Me {
-    type Error = error::Error;
+    type Error = Error;
 
     fn build_cli() -> App<'static, 'static> {
         SubCommand::with_name("self")
-            .about("Setting configuration files of neovim")
+            .about("Command about this deployer")
             .subcommand(SubCommand::with_name("install"))
     }
 
-    fn run(argm: &ArgMatches) -> Result<(), Self::Error> {
+    fn run(argm: &ArgMatches) -> ::std::result::Result<(), Self::Error> {
         match argm.subcommand_name().expect("No subcommand found") {
             "install" => {
                 Self::install()?;

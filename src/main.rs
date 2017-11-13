@@ -14,6 +14,9 @@ extern crate error_chain;
 mod utils;
 mod me;
 mod neovim;
+mod tmux;
+mod zsh;
+mod tilix;
 
 use slog::Drain;
 use slog_scope::GlobalLoggerGuard;
@@ -21,6 +24,9 @@ use std::sync::Arc;
 use clap::{App, ArgMatches};
 use me::Me;
 use neovim::Neovim;
+use tmux::Tmux;
+use zsh::Zsh;
+use tilix::Tilix;
 
 trait Runner {
     type Error: std::error::Error;
@@ -43,6 +49,9 @@ fn build_cli() -> App<'static, 'static> {
         .version("1.0")
         .subcommand(Neovim::build_cli())
         .subcommand(Me::build_cli())
+        .subcommand(Tmux::build_cli())
+        .subcommand(Zsh::build_cli())
+        .subcommand(Tilix::build_cli())
 }
 
 fn setup_slog() -> GlobalLoggerGuard {
@@ -66,8 +75,11 @@ fn main() {
             let subm = matches.subcommand_matches(subc).unwrap();
 
             let func: fn(&ArgMatches) = match subc {
-                "self" => me::Me::run_unwrap,
-                "neovim" => neovim::Neovim::run_unwrap,
+                "self" => Me::run_unwrap,
+                "neovim" => Neovim::run_unwrap,
+                "tmux" => Tmux::run_unwrap,
+                "zsh" => Zsh::run_unwrap,
+                "tilix" => Tilix::run_unwrap,
                 _ => unreachable!(),
             };
             func(subm);
