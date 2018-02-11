@@ -1,19 +1,10 @@
 use clap::{ArgMatches, SubCommand, App};
 
 use Runner;
-use utils;
+use ops;
+use slog::Logger;
 
-mod errors {
-    use utils;
-
-    error_chain!{
-        links {
-            Path(utils::path::Error, utils::path::ErrorKind);
-        }
-    }
-}
-
-use self::errors::*;
+use common::*;
 
 pub struct Tmux {}
 
@@ -21,12 +12,12 @@ impl Tmux {
     #[cfg(target_os = "linux")]
     fn install() -> Result<()> {
 
-        let home_dir = utils::path::get_home_dir()?;
-        let tmux_conf_path = home_dir.join(".tmux.conf");
+        //let home_dir = ops::path::get_home_dir()?;
+        //let tmux_conf_path= home_dir.join(".tmux.conf");
 
-        let dotfiles_tmux_conf_path = home_dir.join(".config/dotfiles/dotfiles/tmux/tmux.conf");
+        //let dotfiles_tmux_conf_path = home_dir.join(".config/dotfiles/dotfiles/tmux/tmux.conf");
 
-        utils::path::symlink(&dotfiles_tmux_conf_path, &tmux_conf_path)?;
+        //ops::path::symlink(&dotfiles_tmux_conf_path, &tmux_conf_path)?;
 
         Ok(())
     }
@@ -41,16 +32,14 @@ impl Tmux {
 impl Tmux {
     #[cfg(target_os = "linux")]
     fn clean() -> Result<()> {
-        let home_dir = utils::path::get_home_dir()?;
-        let tmux_conf_path = home_dir.join(".tmux.conf");
-        utils::path::ensure_clean(tmux_conf_path)?;
+        //let home_dir = ops::path::get_home_dir()?;
+        //let tmux_conf_path = home_dir.join(".tmux.conf");
+        //ops::path::ensure_clean(tmux_conf_path)?;
         Ok(())
     }
 }
 
 impl Runner for Tmux {
-    type Error = Error;
-
     fn build_cli() -> App<'static, 'static> {
         SubCommand::with_name("tmux")
             .about("Setting configuration files of tmux")
@@ -58,7 +47,7 @@ impl Runner for Tmux {
             .subcommand(SubCommand::with_name("clean"))
     }
 
-    fn run(argm: &ArgMatches) -> ::std::result::Result<(), Self::Error> {
+    fn run(argm: &ArgMatches, logger: Logger) -> Result<()> {
         match argm.subcommand_name() {
             Some(name) => match name {
                 "install" => {
@@ -71,6 +60,7 @@ impl Runner for Tmux {
             }
             None => {
                 Self::build_cli().print_help().unwrap();
+                println!();
             }
         };
         Ok(())

@@ -41,6 +41,8 @@ if dein#load_state(g:plugin_base_path)
     call dein#add('rust-lang/rust.vim', {'on_ft': 'rust'})
     call dein#add('hdima/python-syntax')
     call dein#add('hynek/vim-python-pep8-indent')
+    call dein#add('leafgarland/typescript-vim')
+    call dein#add('digitaltoad/vim-pug')
             
     call dein#end()
     call dein#save_state()
@@ -149,6 +151,7 @@ let g:indentLine_setConceal = 0
 let g:LanguageClient_serverCommands = {
     \ 'rust': ['rls'],
     \ 'python': ['pyls'],
+    \ 'typescript': ['javascript-typescript-stdio'],
     \ }
 let g:LanguageClient_autoStart = 1
 

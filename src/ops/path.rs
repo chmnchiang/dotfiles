@@ -1,25 +1,12 @@
-use std::path::{Path, PathBuf};
-use std::fs::{self, DirBuilder};
-use std::os;
+use std::{
+    self,
+    path::{Path, PathBuf},
+    fs::{self, DirBuilder},
+    os,
+};
+
 use slog_scope;
-
-mod errors {
-    error_chain! {
-        foreign_links {
-            Io(::std::io::Error);
-            VarError(::std::env::VarError);
-        }
-
-        errors {
-            EnvVarNotSet(var: String) {
-                description("env var not set")
-                display("env var {} is not set", var)
-            }
-        }
-    }
-}
-
-pub use self::errors::*;
+use common::*;
 
 pub fn ensure_dir<T: AsRef<Path>>(path: T) -> Result<()> {
     let logger = slog_scope::logger();
@@ -52,20 +39,6 @@ pub fn ensure_clean<T: AsRef<Path>>(path: T) -> Result<()> {
     }
 }
 
-pub fn get_home_dir() -> Result<PathBuf> {
-    use std::env::{self, VarError};
-
-    env::var("HOME")
-        .map(PathBuf::from)
-        .map_err(|e| {
-            match e {
-                VarError::NotPresent =>
-                    Error::from_kind(ErrorKind::EnvVarNotSet("HOME".to_owned())),
-                other => other.into()
-            }
-        })
-}
-
 pub fn symlink<P: AsRef<Path>, Q: AsRef<Path>>(src: P, dst: Q) -> Result<()> {
     let logger = slog_scope::logger();
     info!(logger,
@@ -74,8 +47,6 @@ pub fn symlink<P: AsRef<Path>, Q: AsRef<Path>>(src: P, dst: Q) -> Result<()> {
           src.as_ref().to_string_lossy());
 
     os::unix::fs::symlink(&src, &dst).map_err(
-        |e| Error::with_chain(e, format!("Symlink {} -> {} failed",
-                                         dst.as_ref().to_string_lossy(),
-                                         src.as_ref().to_string_lossy()))
+        |_| format_err!("Symlink {} -> {} failed", dst.as_ref().to_string_lossy(), src.as_ref().to_string_lossy())
     )
 }

@@ -1,19 +1,10 @@
 use clap::{ArgMatches, SubCommand, App};
 
 use Runner;
-use utils;
+use ops;
+use slog::Logger;
 
-mod errors {
-    use utils;
-
-    error_chain!{
-        links {
-            Path(utils::path::Error, utils::path::ErrorKind);
-        }
-    }
-}
-
-use self::errors::*;
+use common::*;
 
 pub struct Zsh {}
 
@@ -21,12 +12,12 @@ impl Zsh {
     #[cfg(target_os = "linux")]
     fn install() -> Result<()> {
 
-        let home_dir = utils::path::get_home_dir()?;
-        let zshrc_path = home_dir.join(".zshrc");
+        //let home_dir = ops::path::get_home_dir()?;
+        //let zshrc_path = home_dir.join(".zshrc");
 
-        let dotfiles_zshrc_path = home_dir.join(".config/dotfiles/dotfiles/zsh/zshrc");
+        //let dotfiles_zshrc_path = home_dir.join(".config/dotfiles/dotfiles/zsh/zshrc");
 
-        utils::path::symlink(&dotfiles_zshrc_path, &zshrc_path)?;
+        //ops::path::symlink(&dotfiles_zshrc_path, &zshrc_path)?;
 
         Ok(())
     }
@@ -41,16 +32,14 @@ impl Zsh {
 impl Zsh {
     #[cfg(target_os = "linux")]
     fn clean() -> Result<()> {
-        let home_dir = utils::path::get_home_dir()?;
-        let zshrc_path = home_dir.join(".zshrc");
-        utils::path::ensure_clean(zshrc_path)?;
+        //let home_dir = ops::path::get_home_dir()?;
+        //let zshrc_path = home_dir.join(".zshrc");
+        //ops::path::ensure_clean(zshrc_path)?;
         Ok(())
     }
 }
 
 impl Runner for Zsh {
-    type Error = Error;
-
     fn build_cli() -> App<'static, 'static> {
         SubCommand::with_name("zsh")
             .about("Setting configuration files of zsh")
@@ -58,7 +47,7 @@ impl Runner for Zsh {
             .subcommand(SubCommand::with_name("clean"))
     }
 
-    fn run(argm: &ArgMatches) -> ::std::result::Result<(), Self::Error> {
+    fn run(argm: &ArgMatches, logger: Logger) -> Result<()> {
         match argm.subcommand_name() {
             Some(name) => match name {
                 "install" => {
@@ -71,6 +60,7 @@ impl Runner for Zsh {
             }
             None => {
                 Self::build_cli().print_help().unwrap();
+                println!();
             }
         };
         Ok(())
