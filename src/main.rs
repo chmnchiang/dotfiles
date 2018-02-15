@@ -22,7 +22,8 @@ mod macro_utils;
 
 macro_rules! call_with_all_mod {
     ($macro_name:ident) => {
-        $macro_name!(neovim/Neovim tmux/Tmux zsh/Zsh tilix/Tilix);
+        //$macro_name!(neovim/Neovim tmux/Tmux zsh/Zsh tilix/Tilix);
+        $macro_name!();
     };
 }
 
@@ -42,13 +43,21 @@ use slog_scope::GlobalLoggerGuard;
 use std::sync::Arc;
 use clap::{App, Arg, ArgMatches};
 
+use ops::context::Context;
+
 trait Runner {
     fn build_cli() -> App<'static, 'static>;
-    fn run(&ArgMatches, Logger) -> Result<()>;
+    fn run(&ArgMatches, Context) -> Result<()>;
 
     fn run_unwrap(argm: &ArgMatches) {
         let logger = slog_scope::logger();
-        Self::run(argm, logger.clone())
+
+        let context = Context {
+            logger: logger.clone(),
+            is_dry_run: argm.is_present("dry"),
+        };
+
+        Self::run(argm, context)
             .map_err(|error| {
                 error!(logger, "{}", error);
             })

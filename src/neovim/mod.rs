@@ -5,7 +5,6 @@ use Runner;
 use ops;
 use ops::path::ensure_parent_dir;
 use ops::context::Context;
-use slog::Logger;
 
 use common::*;
 
@@ -71,11 +70,7 @@ impl Runner for Neovim {
             )
     }
 
-    fn run(argm: &ArgMatches, logger: Logger) -> Result<()> {
-        let context = Context {
-            logger: logger,
-            is_dry_run: argm.is_present("dry"),
-        };
+    fn run(argm: &ArgMatches, context: Context) -> Result<()> {
 
         match argm.subcommand_name() {
             Some(name) => match name {
