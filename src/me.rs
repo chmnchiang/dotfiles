@@ -2,8 +2,12 @@ use std::{
     env,
     fs,
     os,
-    io,
+    io::{
+        self,
+        Write,
+    },
     path::Path,
+    process::Command,
 };
 use clap::{ArgMatches, SubCommand, App};
 
@@ -29,7 +33,8 @@ lazy_static! {
 
 impl Me {
     fn commit() -> Result<()> {
-        let repo = Repository::open(INSTALL_DIR.try_into_path()?)?;
+        let path = INSTALL_DIR.try_into_path()?;
+        let repo = Repository::open(&path)?;
         let mut index = repo.index()?;
 
         index.add_all(
@@ -38,63 +43,55 @@ impl Me {
             None,
         )?;
 
+        index.write()?;
         let tree_oid = index.write_tree()?;
+
         let tree = repo.find_tree(tree_oid).unwrap();
 
-        let parent = repo.find_commit(repo.refname_to_id("hao123")?)?;
+        let parent = repo.find_commit(repo.refname_to_id("HEAD")?)?;
 
         let signature = repo.signature()?;
 
         let mut commit_message = String::new();
         print!("Type commit message here: ");
+        io::stdout().flush();
         io::stdin().read_line(&mut commit_message)?;
 
         repo.commit(
-            Some("hao123"),
+            Some("HEAD"),
             &signature,
             &signature, 
             &commit_message,
             &tree,
             &[&parent],
         )?;
-
         
 
+        let status = Command::new("git")
+            .arg("-C")
+            .arg(&path)
+            .arg("push")
+            .status()?;
 
-
-        //let install_dir = INSTALL_DIR.try_into_path()?;
-
-        //ensure_parent_dir(&target_dir)?;
-
-        //let cur_dir = env::current_dir()?;
-
-        //fs::rename(&cur_dir, &target_dir)?;
-
-        //let bin_path = target_dir.join("target/release/dotfiles");
-        
-        //let bin_symlink_path = home_dir.join(".local/bin/dotfl");
-        //ensure_parent_dir(&bin_symlink_path)?;
-
-        //os::unix::fs::symlink(&bin_path, &bin_symlink_path)?;
+        if !status.success() {
+            bail!("push repo failed");
+        }
 
         Ok(())
     }
 
     fn upgrade() -> Result<()> {
-        //let install_dir = INSTALL_DIR.try_into_path()?;
+        let path = INSTALL_DIR.try_into_path()?;
 
-        //ensure_parent_dir(&target_dir)?;
+        let status = Command::new("git")
+            .arg("-C")
+            .arg(&path)
+            .arg("pull")
+            .status()?;
 
-        //let cur_dir = env::current_dir()?;
-
-        //fs::rename(&cur_dir, &target_dir)?;
-
-        //let bin_path = target_dir.join("target/release/dotfiles");
-        
-        //let bin_symlink_path = home_dir.join(".local/bin/dotfl");
-        //ensure_parent_dir(&bin_symlink_path)?;
-
-        //os::unix::fs::symlink(&bin_path, &bin_symlink_path)?;
+        if !status.success() {
+            bail!("pull repo failed");
+        }
 
         Ok(())
     }
@@ -119,7 +116,7 @@ impl Runner for Me {
             "upgrade" => {
                 Self::upgrade()?;
             },
-            "install" => {
+            "commit" => {
                 Self::commit()?;
             },
             _ => unreachable!(),

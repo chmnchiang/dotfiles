@@ -23,5 +23,7 @@ fn main() {
                 env::var("HOME").expect("Env var $HOME is not set") + POST_FIX]) .status()
         .unwrap();
 
+    "hao123";
+
     if !cmd.success() { panic!("Copy source file failed"); }
 }
