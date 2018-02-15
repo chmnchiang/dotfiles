@@ -1,5 +1,5 @@
 mkdir -p $HOME/.config
-INSTALL_PATH=$HOME/.config/dotfiles2
+INSTALL_PATH=$HOME/.config/dotfiles
 if [ -e $INSTALL_PATH ]; then
     echo -n "It seems that $INSTALL_PATH already exists, shall I remove it (y/n)? "
     read yn
