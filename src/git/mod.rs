@@ -7,49 +7,47 @@ use common::*;
 
 use me::INSTALL_DIR;
 
-pub struct Tmux {}
+pub struct Git {}
 
 lazy_static! {
-    static ref TMUX_CONF_PATH: HomePath = HomePath(".tmux.conf".into());
-    static ref DOTFILES_TMUX_CONF_PATH: HomePath = {
-        INSTALL_DIR.join("dotfiles/tmux/tmux.dconf")
+    static ref GIT_CONF_PATH: HomePath = HomePath(".gitconfig".into());
+    static ref DOTFILES_GIT_CONF_PATH: HomePath = {
+        INSTALL_DIR.join("dotfiles/git/gitconfig")
     };
 }
 
-impl Tmux {
+impl Git {
     fn install(context: Context) -> Result<()> {
 
-        let tmux_conf_path = TMUX_CONF_PATH.try_into_path()?;
+        let conf_path = GIT_CONF_PATH.try_into_path()?;
+        let dotfiles_conf_path = DOTFILES_GIT_CONF_PATH.try_into_path()?;
 
-        let dotfiles_tmux_conf_path = DOTFILES_TMUX_CONF_PATH.try_into_path()?;
-
-        ops::path::symlink(&context, &dotfiles_tmux_conf_path, &tmux_conf_path)?;
+        ops::path::symlink(&context, &dotfiles_conf_path, &conf_path)?;
 
         Ok(())
     }
 }
 
 
-impl Tmux {
-    #[cfg(target_os = "linux")]
+impl Git {
     fn clean(context: Context) -> Result<()> {
-        let tmux_conf_path = TMUX_CONF_PATH.try_into_path()?;
-        ops::path::ensure_clean(&context, tmux_conf_path)?;
+        let conf_path = GIT_CONF_PATH.try_into_path()?;
+        ops::path::ensure_clean(&context, conf_path)?;
         Ok(())
     }
 }
 
-impl Runner for Tmux {
+impl Runner for Git {
     fn build_cli() -> App<'static, 'static> {
-        SubCommand::with_name("tmux")
-            .about("Setting configuration files of tmux")
+        SubCommand::with_name("git")
+            .about("Setting configuration files of git")
             .subcommand(
                 SubCommand::with_name("install")
-                    .about("install tmux configuration")
+                    .about("install git configuration")
             )
             .subcommand(
                 SubCommand::with_name("clean")
-                    .about("cleaning tmux configuration files")
+                    .about("cleaning git configuration files")
             )
     }
 

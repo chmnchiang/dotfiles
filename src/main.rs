@@ -22,8 +22,7 @@ mod macro_utils;
 
 macro_rules! call_with_all_mod {
     ($macro_name:ident) => {
-        //$macro_name!(neovim/Neovim tmux/Tmux zsh/Zsh tilix/Tilix);
-        $macro_name!();
+        $macro_name!(neovim/Neovim tmux/Tmux zsh/Zsh tilix/Tilix git/Git);
     };
 }
 
@@ -42,8 +41,6 @@ use slog::{Logger, Drain};
 use slog_scope::GlobalLoggerGuard;
 use std::sync::Arc;
 use clap::{App, Arg, ArgMatches};
-
-use ops::context::Context;
 
 trait Runner {
     fn build_cli() -> App<'static, 'static>;

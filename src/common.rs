@@ -10,3 +10,4 @@ pub use home_path::HomePath;
 
 pub use slog::Logger;
 
+pub use ops::context::Context;

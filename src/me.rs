@@ -1,5 +1,4 @@
 use std::{
-    env,
     io::{
         self,
         Write,
@@ -22,7 +21,7 @@ use common::*;
 pub struct Me {}
 
 lazy_static! {
-    static ref INSTALL_DIR: HomePath = HomePath(".config/dotfiles".into());
+    pub static ref INSTALL_DIR: HomePath = HomePath(".config/dotfiles".into());
 }
 
 impl Me {

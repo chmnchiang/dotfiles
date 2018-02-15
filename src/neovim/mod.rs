@@ -8,50 +8,54 @@ use ops::context::Context;
 
 use common::*;
 
+use me::INSTALL_DIR;
+
 const DEIN_URL: &str = "https://github.com/Shougo/dein.vim";
+
+lazy_static! {
+    static ref DEIN_PATH: HomePath = HomePath(".vim/dein.vim".into());
+    static ref NVIM_INSTALL_DIR: HomePath = HomePath(".config/nvim".into());
+    static ref DOTFILES_NVIM_DIR: HomePath = {
+        INSTALL_DIR.join("dotfiles/nvim")
+    };
+}
+
 
 pub struct Neovim {}
 
 impl Neovim {
-    #[cfg(target_os = "linux")]
     fn install(context: Context) -> Result<()> {
-        //let logger = &context.logger;
 
-        //let home_dir = ops::path::get_home_dir()?;
+        let logger = &context.logger;
+        let dein_path = DEIN_PATH.try_into_path()?;
 
-        //let dein_path = home_dir.join(".vim/dein.vim");
+        ensure_parent_dir(&context, &dein_path)?;
 
-        //ensure_parent_dir(&dein_path)?;
+        info!(logger, "cloning repo {} into {}", DEIN_URL, dein_path.to_string_lossy());
 
-        //info!(logger, "cloning {} to {}", DEIN_URL, dein_path.to_string_lossy());
-        //Repository::clone(DEIN_URL, &dein_path)?;
+        if !context.is_dry_run {
+            Repository::clone(DEIN_URL, &dein_path)?;
+        }
 
-        //let nvim_config_dir = home_dir.join(".config/nvim");
-        //ensure_parent_dir(&nvim_config_dir)?;
+        let nvim_install_dir = NVIM_INSTALL_DIR.try_into_path()?;
+        ensure_parent_dir(&context, &nvim_install_dir)?;
 
-        //let dotfiles_nvim_dir = home_dir.join(".config/dotfiles/dotfiles/nvim");
+        let dotfiles_nvim_dir = DOTFILES_NVIM_DIR.try_into_path()?;
 
-        //ops::path::symlink(&dotfiles_nvim_dir, &nvim_config_dir)?;
+        ops::path::symlink(&context, &dotfiles_nvim_dir, &nvim_install_dir)?;
 
         Ok(())
-    }
-
-    #[cfg(not(target_os = "linux"))]
-    fn install() {
-        unimplemented!()
     }
 }
 
 
 impl Neovim {
-    #[cfg(target_os = "linux")]
     fn clean(context: Context) -> Result<()> {
-        //let home_dir = ops::path::get_home_dir()?;
-        //let dein_dir = home_dir.join(".vim/dein.vim");
-        //ops::path::ensure_clean(dein_dir)?;
+        let dein_path = DEIN_PATH.try_into_path()?;
+        ops::path::ensure_clean(&context, dein_path)?;
 
-        //let nvim_dir = home_dir.join(".config/nvim");
-        //ops::path::ensure_clean(nvim_dir)?;
+        let nvim_install_dir = NVIM_INSTALL_DIR.try_into_path()?;
+        ops::path::ensure_clean(&context, nvim_install_dir)?;
         Ok(())
     }
 }

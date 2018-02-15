@@ -3,31 +3,39 @@ use std::process::Command;
 use std::fs::OpenOptions;
 
 use Runner;
-use ops;
 use ops::context::Context;
-use slog::Logger;
 
 use common::*;
+
+use me::INSTALL_DIR;
+
+lazy_static! {
+    static ref DOTFILES_TILIX_DCONF_PATH: HomePath = {
+        INSTALL_DIR.join("dotfiles/tilix/tilix.dconf")
+    };
+}
 
 pub struct Tilix {}
 
 impl Tilix {
     #[cfg(target_os = "linux")]
     fn install(context: Context) -> Result<()> {
-        //let logger = &context.logger;
+        let Context {ref logger, is_dry_run} = context;
 
-        //let home_dir = ops::path::get_home_dir()?;
-        //let dconf_path = home_dir.join(".config/dotfiles/dotfiles/tilix/tilix.dconf");
-        //info!(logger, "load tilix dconf file from {}", dconf_path.to_string_lossy());
-        //let file = OpenOptions::new()
-            //.read(true)
-            //.open(&dconf_path)?;
+        let dconf_path = DOTFILES_TILIX_DCONF_PATH.try_into_path()?;
+        info!(logger, "load tilix dconf file from {}", dconf_path.to_string_lossy());
 
-        //Command::new("dconf")
-            //.arg("load")
-            //.arg("/com/gexperts/Tilix/")
-            //.stdin(file)
-            //.spawn()?;
+        if !is_dry_run {
+            let file = OpenOptions::new()
+                .read(true)
+                .open(&dconf_path)?;
+
+            Command::new("dconf")
+                .arg("load")
+                .arg("/com/gexperts/Tilix/")
+                .stdin(file)
+                .spawn()?;
+        }
             
         Ok(())
     }
@@ -37,21 +45,23 @@ impl Tilix {
 impl Tilix {
     #[cfg(target_os = "linux")]
     fn save(context: Context) -> Result<()> {
-        //let logger = &context.logger;
+        let Context {ref logger, is_dry_run} = context;
+        let dconf_path = DOTFILES_TILIX_DCONF_PATH.try_into_path()?;
 
-        //let home_dir = ops::path::get_home_dir()?;
-        //let dconf_path = home_dir.join(".config/dotfiles/dotfiles/tilix/tilix.dconf");
-        //info!(logger, "dump tilix dconf file into {}", dconf_path.to_string_lossy());
-        //let file = OpenOptions::new()
-            //.write(true)
-            //.create(true)
-            //.open(&dconf_path)?;
+        info!(logger, "dump tilix dconf file into {}", dconf_path.to_string_lossy());
 
-        //Command::new("dconf")
-            //.arg("dump")
-            //.arg("/com/gexperts/Tilix/")
-            //.stdout(file)
-            //.spawn()?;
+        if !is_dry_run {
+            let file = OpenOptions::new()
+                .write(true)
+                .create(true)
+                .open(&dconf_path)?;
+
+            Command::new("dconf")
+                .arg("dump")
+                .arg("/com/gexperts/Tilix/")
+                .stdout(file)
+                .spawn()?;
+        }
             
 
         Ok(())
@@ -62,15 +72,17 @@ impl Runner for Tilix {
     fn build_cli() -> App<'static, 'static> {
         SubCommand::with_name("tilix")
             .about("Setting configuration files of tmux")
-            .subcommand(SubCommand::with_name("install"))
-            .subcommand(SubCommand::with_name("save"))
+            .subcommand(
+                SubCommand::with_name("install")
+                    .about("load tilix configuration files")
+            )
+            .subcommand(
+                SubCommand::with_name("save")
+                    .about("dump and save tilix configuration files")
+            )
     }
 
-    fn run(argm: &ArgMatches, logger: Logger) -> Result<()> {
-        let context = Context {
-            logger: logger,
-            is_dry_run: argm.is_present("dry")
-        };
+    fn run(argm: &ArgMatches, context: Context) -> Result<()> {
 
         match argm.subcommand_name() {
             Some(name) => match name {
