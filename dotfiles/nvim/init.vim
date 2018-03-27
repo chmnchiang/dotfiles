@@ -43,6 +43,8 @@ if dein#load_state(g:plugin_base_path)
     call dein#add('hynek/vim-python-pep8-indent')
     call dein#add('leafgarland/typescript-vim')
     call dein#add('digitaltoad/vim-pug')
+    call dein#add('vim-python/python-syntax')
+    call dein#add('othree/yajs.vim')
             
     call dein#end()
     call dein#save_state()
@@ -151,6 +153,7 @@ let g:indentLine_setConceal = 0
 let g:LanguageClient_serverCommands = {
     \ 'rust': ['rls'],
     \ 'python': ['pyls'],
+    \ 'javascript': ['javascript-typescript-stdio'],
     \ 'typescript': ['javascript-typescript-stdio'],
     \ }
 let g:LanguageClient_autoStart = 1
@@ -159,4 +162,7 @@ let g:deoplete#enable_at_startup = 1
 
 " Git gutter
 let g:gitgutter_map_keys = 0
+
+let g:python_highlight_all = 1
+
 "}}}
