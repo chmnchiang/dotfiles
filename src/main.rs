@@ -1,66 +1,53 @@
 #![feature(trace_macros)]
+#![feature(cell_update)]
 #![recursion_limit = "1024"]
 
 //trace_macros!(true);
 
-#[macro_use] extern crate lazy_static;
-
-extern crate clap;
-extern crate git2;
-
-#[macro_use]
-extern crate slog;
-extern crate slog_term;
-extern crate slog_scope;
-extern crate slog_async;
-
-#[macro_use]
-extern crate failure;
-
-#[macro_use]
-mod macro_utils;
-
-macro_rules! call_with_all_mod {
-    ($macro_name:ident) => {
-        $macro_name!(neovim/Neovim tmux/Tmux zsh/Zsh tilix/Tilix git/Git);
-    };
-}
-
-mod me;
-use me::Me;
-
-call_with_all_mod!(include_all_mod);
-
-mod ops;
-mod common;
-mod home_path;
-
-use common::*;
-
-use slog::{Logger, Drain};
+use slog::{Logger, Drain, o};
 use slog_scope::GlobalLoggerGuard;
 use std::sync::Arc;
 use clap::{App, Arg, ArgMatches};
 
-trait Runner {
-    fn build_cli() -> App<'static, 'static>;
-    fn run(&ArgMatches, Context) -> Result<()>;
+#[macro_use]
+mod macro_utils;
+//use crate::macro_utils::warn;
 
-    fn run_unwrap(argm: &ArgMatches) {
-        let logger = slog_scope::logger();
+mod common;
+use crate::common::*;
 
-        let context = Context {
-            logger: logger.clone(),
-            is_dry_run: argm.is_present("dry"),
-        };
+mod prompt;
 
-        Self::run(argm, context)
-            .map_err(|error| {
-                error!(logger, "{}", error);
-            })
-            .unwrap();
-    }
+//macro_rules! call_with_all_mod {
+    //($macro_name:ident) => {
+        //$macro_name!(
+            //neovim/Neovim
+            ////tmux/Tmux
+            ////zsh/Zsh
+            ////tilix/Tilix
+            ////git/Git
+        //);
+    //};
+//}
+
+mod me;
+use crate::me::Me;
+
+mod sub;
+
+macro_rules! include_all_mod {
+    ($($name:ident/$Name:ident) * ) => {
+        $(
+            use crate::sub::$name::$Name;
+        )*
+    };
 }
+
+call_with_all_mod!(include_all_mod);
+
+mod runner;
+mod ops;
+mod common_path;
 
 fn build_cli() -> App<'static, 'static> {
     let app = App::new("Dotfiles")
@@ -71,6 +58,14 @@ fn build_cli() -> App<'static, 'static> {
                 .long("dry-run")
                 .global(true)
                 .help("preform dry run instead"));
+
+    macro_rules! append_all_mod_on_app {
+        ($($name:ident/$Name:ident) *) => {
+            |x: App<'static, 'static>| x
+                $(.subcommand($Name::build_cli()))*
+                //append_all_mod_on_app!($expr.subcommand($Name::build_cli()), $($other/$Other)*);
+        };
+    }
 
     call_with_all_mod!(
         append_all_mod_on_app
@@ -85,26 +80,39 @@ fn setup_slog() -> GlobalLoggerGuard {
     slog_scope::set_global_logger(log)
 }
 
-fn main() {
+fn main() -> Result<()> {
 
     let _logger_guard = setup_slog();
 
     let app = build_cli();
     let matches = app.get_matches();
 
+    macro_rules! generate_match_all_mod {
+        ($($name:ident/$Name:ident) * ) => {
+            |x| match x {
+                $(
+                    stringify!($name) => $Name::run2,
+                )*
+                _ => unreachable!()
+            }
+        };
+    }
+
     match matches.subcommand_name() {
         Some(subc) => {
             let subm = matches.subcommand_matches(subc).unwrap();
 
-            let func: fn(&ArgMatches) = match subc {
-                "self" => Me::run_unwrap,
+            let func: fn(&ArgMatches) -> Result<()> = match subc {
+                "self" => Me::run2,
                 other => call_with_all_mod!(generate_match_all_mod)(other),
             };
-            func(subm);
+            func(subm)?;
         }
         None => {
             build_cli().print_help().unwrap();
             println!()
         }
     };
+
+    Ok(())
 }

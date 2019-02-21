@@ -2,12 +2,16 @@ use std;
 pub use failure::{
     Error,
     ResultExt,
+    bail,
+    format_err,
 };
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-pub use home_path::HomePath;
+pub use lazy_static::lazy_static;
 
-pub use slog::Logger;
+pub use crate::common_path::*;
 
-pub use ops::context::Context;
+pub use slog::{Logger, error, info};
+
+pub use crate::runner::{Context, Runner, Installable};

@@ -1,10 +1,26 @@
-macro_rules! include_all_mod {
-    ($($name:ident/$Name:ident) * ) => {
-        $(
-            mod $name;
-            use $name::$Name;
-        )*
+#[macro_export]
+macro_rules! call_with_all_mod {
+    ($macro_name:ident) => {
+        $macro_name!(
+            neovim/Neovim
+            tmux/Tmux
+            zsh/Zsh
+            tilix/Tilix
+            git/Git
+        );
     };
+}
+
+#[macro_export]
+macro_rules! generate_command {
+    ($name:ident, $context:ident; $($command:ident),*) => {
+        match $name {
+            $(stringify!($command) => {
+                Self::$command($context)?;
+            })*
+            _ => unreachable!(),
+        }
+    }
 }
 
 //macro_rules! append_all_mod_on_app {
@@ -14,22 +30,4 @@ macro_rules! include_all_mod {
     //};
 //}
 
-macro_rules! append_all_mod_on_app {
-    ($($name:ident/$Name:ident) *) => {
-        |x: App<'static, 'static>| x
-            $(.subcommand($Name::build_cli()))*
-            //append_all_mod_on_app!($expr.subcommand($Name::build_cli()), $($other/$Other)*);
-    };
-}
-
-macro_rules! generate_match_all_mod {
-    ($($name:ident/$Name:ident) * ) => {
-        |x| match x {
-            $(
-                stringify!($name) => $Name::run_unwrap,
-            )*
-            _ => unreachable!()
-        }
-    };
-}
 

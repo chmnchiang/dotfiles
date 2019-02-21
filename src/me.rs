@@ -7,16 +7,12 @@ use std::{
 };
 use clap::{ArgMatches, SubCommand, App};
 
-use Runner;
-use ops::context::Context;
-
 use git2::{
     Repository,
-    ADD_DEFAULT,
-    ADD_CHECK_PATHSPEC,
+    IndexAddOption,
 };
 
-use common::*;
+use crate::common::*;
 
 pub struct Me {}
 
@@ -25,19 +21,18 @@ lazy_static! {
 }
 
 impl Me {
-    fn commit(Context {logger, is_dry_run}: Context) -> Result<()> {
+    fn commit(Context {ref prompt, is_dry_run}: &Context) -> Result<()> {
         let path = INSTALL_DIR.try_into_path()?;
-
-        info!(logger, "try open git repo at {}", path.to_string_lossy());
 
         let repo = Repository::open(&path)?;
         let mut index = repo.index()?;
 
-        info!(logger, "stage all changes and commit, (a.k.a `git add -A; git commit`)");
+        prompt.info("stage all changes and commit, (a.k.a `git add -A; git commit`)");
+
         if !is_dry_run {
             index.add_all(
                 &["*"],
-                ADD_DEFAULT | ADD_CHECK_PATHSPEC,
+                IndexAddOption::DEFAULT | IndexAddOption::CHECK_PATHSPEC,
                 None,
             )?;
             index.write()?;
@@ -62,7 +57,7 @@ impl Me {
             )?;
         }
         
-        info!(logger, "push to remote");
+        prompt.info("push to remote");
 
 
         if !is_dry_run {
@@ -80,27 +75,29 @@ impl Me {
         Ok(())
     }
 
-    fn upgrade(Context {logger, is_dry_run}: Context) -> Result<()> {
+    fn upgrade(Context {ref prompt, is_dry_run}: &Context) -> Result<()> {
         let path = INSTALL_DIR.try_into_path()?;
 
-        info!(logger, "pull remote into {}", path.to_string_lossy());
+        prompt.proc_with(
+            &format!("pull remote into {}", path.to_string_lossy()),
+            || {
+                if !is_dry_run {
+                    let status = Command::new("git")
+                        .arg("-C")
+                        .arg(&path)
+                        .arg("pull")
+                        .status()?;
 
-        if !is_dry_run {
-            let status = Command::new("git")
-                .arg("-C")
-                .arg(&path)
-                .arg("pull")
-                .status()?;
-
-            if !status.success() {
-                bail!("pull repo failed");
+                    if !status.success() {
+                        bail!("pull repo failed");
+                    }
+                }
+                Ok(())
             }
-        }
-
-        Ok(())
+        )
     }
 
-    fn dir(_: Context) -> Result<()> {
+    fn dir(_: &Context) -> Result<()> {
         let path = INSTALL_DIR.try_into_path()?;
         println!("{}", path.to_string_lossy());
         Ok(())
@@ -125,18 +122,13 @@ impl Runner for Me {
             )
     }
 
-    fn run(argm: &ArgMatches, context: Context) -> Result<()> {
-        match argm.subcommand_name().expect("No subcommand found") {
-            "upgrade" => {
-                Self::upgrade(context)?;
-            },
-            "commit" => {
-                Self::commit(context)?;
-            },
-            "dir" => {
-                Self::dir(context)?;
-            },
-            _ => unreachable!(),
+    fn run(argm: &ArgMatches, context: &Context) -> Result<()> {
+        match argm.subcommand_name() {
+            Some(name) => generate_command!(name, context; upgrade, commit, dir),
+            None => {
+                Self::build_cli().print_help().unwrap();
+                println!();
+            }
         };
         Ok(())
     }
