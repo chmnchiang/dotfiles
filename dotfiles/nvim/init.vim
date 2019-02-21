@@ -27,15 +27,16 @@ if dein#load_state(g:plugin_base_path)
     call dein#add('bling/vim-airline')
 
     call dein#add('marcweber/vim-addon-mw-utils')
-    call dein#add('Yggdroot/indentLine')
+    "call dein#add('Yggdroot/indentLine')
+    call dein#add('nathanaelkane/vim-indent-guides')
     call dein#add('jlanzarotta/bufexplorer')
     call dein#add('Shougo/deoplete.nvim')
 
-    call dein#add('benekastah/neomake')
+    "call dein#add('benekastah/neomake')
     " Git +/- in left bar
     call dein#add('airblade/vim-gitgutter')
 
-    call dein#add('autozimu/LanguageClient-neovim')
+    call dein#add('autozimu/LanguageClient-neovim', {'rev': 'next', 'build': 'bash install.sh'})
 
     " Filetype plugin
     call dein#add('rust-lang/rust.vim', {'on_ft': 'rust'})
@@ -43,8 +44,11 @@ if dein#load_state(g:plugin_base_path)
     call dein#add('hynek/vim-python-pep8-indent')
     call dein#add('leafgarland/typescript-vim')
     call dein#add('digitaltoad/vim-pug')
-    call dein#add('vim-python/python-syntax')
+    "call dein#add('vim-python/python-syntax')
     call dein#add('othree/yajs.vim')
+
+    call dein#add('roxma/vim-hug-neovim-rpc')
+    call dein#add('roxma/nvim-yarp')
             
     call dein#end()
     call dein#save_state()
@@ -92,14 +96,26 @@ set foldenable
 " need to fold there.
 set foldmethod=marker
 
+" Since I don't use IndentLine anymore...
 " Needed by IndentLine
-set conceallevel=2
-set concealcursor=nc
-" Conceal sucks at json files...
-autocmd Filetype json setl conceallevel=0
+"set conceallevel=2
+"set concealcursor=nc
 
 " Don't show the annoying preview window
 set completeopt-=preview
+
+" Always show sign column
+set signcolumn=yes
+
+" Set cursor to last known position in Neovim
+if has('nvim')
+    autocmd BufReadPost *
+        \ if line("'\"") > 1 && line("'\"") <= line("$") && &ft !~# 'commit'
+        \ |   exe "normal! g`\""
+        \ | endif
+endif
+
+
 "}}}
 
 " Key settings {{{
@@ -114,6 +130,11 @@ noremap ^ 0
 " swap : and ,
 noremap : ,
 noremap , :
+" ^A is used by tmux, change to + -
+noremap + <C-a>
+noremap - <C-x>
+" ^A is used by tmux, change to ^B
+inoremap <C-b> <C-a>
 
 " Open Nerdtree
 nnoremap <leader>n :NERDTreeToggle<CR>
@@ -132,9 +153,10 @@ endif
 
 " Language Client
 nnoremap <silent> K :call LanguageClient_textDocument_hover()<CR>
-" TODO: gd without leader
 nnoremap <silent> <leader>gd :call LanguageClient_textDocument_definition()<CR>
-nnoremap <silent> <leader>rn :call LanguageClient_textDocument_rename()<CR>
+nnoremap <silent> <leader>gr :call LanguageClient_textDocument_rename()<CR>
+nnoremap <silent> <leader>gf :call LanguageClient_textDocument_formatting()<CR>
+"nnoremap <silent> <leader>gs :LanguageClientStart<CR>
 
 "}}}
 
@@ -149,16 +171,29 @@ let NERDTreeShowHidden = 1
 " Indent Line
 let g:indentLine_setConceal = 0
 
+" Indent guide
+let g:indent_guides_enable_on_vim_startup = 1
+let g:indent_guides_auto_colors = 0
+let g:indent_guides_guide_size = 1
+let g:indent_guides_start_level = 2
+autocmd VimEnter,Colorscheme * :hi IndentGuidesEven  guibg=#242424 ctermbg=233
+autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd   guibg=#2c2c2c ctermbg=234
+
 " Language server
 let g:LanguageClient_serverCommands = {
+    \ 'cpp': ['cquery', 
+        \ '--log-file=/tmp/cq.log', 
+        \ '--init={"cacheDirectory":"/tmp/cquery/"}'],
     \ 'rust': ['rls'],
     \ 'python': ['pyls'],
     \ 'javascript': ['javascript-typescript-stdio'],
     \ 'typescript': ['javascript-typescript-stdio'],
     \ }
 let g:LanguageClient_autoStart = 1
+let g:LanguageClient_useVirtualText = 0
 
 let g:deoplete#enable_at_startup = 1
+
 
 " Git gutter
 let g:gitgutter_map_keys = 0

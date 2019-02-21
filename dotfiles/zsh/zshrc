@@ -3,44 +3,46 @@
 #############################
 # enable fuzzy finder if it exists
 if ! [[ -f ~/.fzf.zsh ]] ; then
-  if ! [[ -f ~/.fzf/install ]] ; then
-    rm -rf ~/.fzf
-    git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-  fi
-  ~/.fzf/install --all
+    if ! [[ -f ~/.fzf/install ]] ; then
+        rm -rf ~/.fzf
+        git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+    fi
+    ~/.fzf/install --all
 fi
 
 source ~/.fzf.zsh
 export FZF_DEFAULT_OPTS="-m --cycle"
 (( $+commands[ag] )) && export FZF_DEFAULT_COMMAND='ag -l -g ""'
+#(( $+commands[rg] )) && export FZF_DEFAULT_COMMAND='rg -files""'
 
 if ! [[ -f "${HOME}/.zplug/init.zsh" ]]; then
-  curl -sL zplug.sh/installer | zsh
+    curl -sL zplug.sh/installer | zsh
 fi
 zstyle :zplug:tag depth 1
 source "${HOME}/.zplug/init.zsh"
 
-#zplug "zplug/zplug"
+zplug "willghatch/zsh-hooks"
 zplug "zsh-users/zsh-completions", use:"*.plugin.zsh"
-zplug "mafredri/zsh-async", use:"async.zsh"
-zplug "leomao/zsh-hooks", use:"*.plugin.zsh"
-zplug "leomao/vim.zsh", use:vim.zsh, defer:1
-zplug "leomao/pika-prompt", use:pika-prompt.zsh, defer:2
+zplug "mafredri/zsh-async"
+#zplug "leomao/zsh-hooks", use:"*.plugin.zsh"
+#zplug "leomao/vim.zsh", use:vim.zsh, defer:1
+#zplug "leomao/pika-prompt", use:pika-prompt.zsh, defer:2
+zplug "sindresorhus/pure", use:pure.zsh, from:github, as:theme
 
 zplug "so-fancy/diff-so-fancy", as:command, use:diff-so-fancy
 
-export ENHANCD_DISABLE_HOME=1
-export ENHANCD_DOT_ARG='.'
-zplug "b4b4r07/enhancd", use:init.sh
+#export ENHANCD_DISABLE_HOME=1
+#export ENHANCD_DOT_ARG='.'
+#zplug "b4b4r07/enhancd", use:init.sh
 
 export ZSH_HIGHLIGHT_HIGHLIGHTERS=(main brackets)
 zplug "zsh-users/zsh-syntax-highlighting", use:"*.plugin.zsh", defer:3
 
 if ! zplug check --verbose; then
-  printf "Install? [y/N]: "
-  if read -q; then
-    echo; zplug install
-  fi
+    printf "Install? [y/N]: "
+    if read -q; then
+        echo; zplug install
+    fi
 fi
 
 zplug load
@@ -51,22 +53,35 @@ zplug load
 # Because of a bug, we set path here instead of .zshenv
 # see the notes below
 # https://wiki.archlinux.org/index.php/Zsh#Configuration_files
+# local bin
+export PATH="$HOME/.local/bin/:$PATH"
+
+# Ruby
 if (( $+commands[ruby] )) ; then
-  if [[ -d ~/.rbenv ]] ; then
-    # use rbenv if it exists
-    export PATH="$HOME/.rbenv/bin:$PATH"
-    eval "$(rbenv init -)"
-  else
-    # According to https://wiki.archlinux.org/index.php/Ruby#RubyGems
-    export GEM_HOME=$(ruby -e 'puts Gem.user_dir')
-    export PATH="${GEM_HOME}/bin:$PATH"
-  fi
+    if [[ -d ~/.rbenv ]] ; then
+        # use rbenv if it exists
+        export PATH="$HOME/.rbenv/bin:$PATH"
+        eval "$(rbenv init -)"
+    else
+        # According to https://wiki.archlinux.org/index.php/Ruby#RubyGems
+        export GEM_HOME=$(ruby -e 'puts Gem.user_dir')
+        export PATH="${GEM_HOME}/bin:$PATH"
+    fi
 fi
 
+# Node
 if (( $+commands[npm] )) ; then
-  export PATH="$HOME/.node_modules/bin:$PATH"
-  export npm_config_prefix=~/.node_modules
+    export PATH="$HOME/.node_modules/bin:$PATH"
+    export npm_config_prefix=~/.node_modules
 fi
+
+# Cargo
+if (( $+commands[cargo] )) ; then
+    export PATH="$HOME/.cargo/bin:$PATH"
+fi
+
+# For cuda
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/cuda/lib64/
 
 #############################
 # Options
@@ -82,38 +97,107 @@ setopt rm_star_wait
 
 # Directory Stack settings
 DIRSTACKSIZE=8
-setopt auto_cd
-setopt autopushd pushdminus pushdsilent pushdtohome
+# cd if a command is not found but match a dir
+#setopt auto_cd
+# make cd = pushd
+setopt autopushd
+# swap cd + and cd -
+setopt pushdminus
+# don't list stack when pushd
+#setopt pushdsilent
+# if out of stack bound, auto cd home
+setopt pushdtohome
+
+#############################
+# Key bindings
+#############################
+# Ensure that zle is set to/back application mode once start/end editing
+if (( ${+terminfo[smkx]} )) && (( ${+terminfo[rmkx]} )); then
+  zle-keybinds-init() {
+    echoti smkx
+  }
+  zle-keybinds-finish() {
+    echoti rmkx
+  }
+  hooks-add-hook zle_line_init_hook zle-keybinds-init
+  hooks-add-hook zle_line_finish_hook zle-keybinds-finish
+fi
+bindkey "${terminfo[khome]}" beginning-of-line
+bindkey "${terminfo[kend]}" end-of-line
+bindkey "${terminfo[kdch1]}" delete-char
+bindkey -M vicmd "${terminfo[kdch1]}" delete-char
+bindkey "${terminfo[kich1]}" overwrite-mode
+bindkey -M vicmd "${terminfo[kich1]}" vi-insert
+bindkey "^h" backward-delete-char
+bindkey "^u" backward-kill-line
+bindkey "^?" backward-delete-char
 
 #############################
 # Aliases
 #############################
-# List direcory contents
+
 alias ls='ls -h --color --group-directories-first'
+# Use exa to replace ls
+if (( $+commands[exa] )) ; then
+    alias ls='exa --group-directories-first'
+fi
+
+# Use ripgrep to replace grep
+if (( $+commands[rg] )) ; then
+    alias s=rg
+fi
+
+# List direcory contents
 alias l='ls -F'
 alias ll='ls -lF'
-alias la='ls -lAF'
-alias lx='ls -lXB'
-alias lk='ls -lSr'
-alias lt='ls -lAFtr'
-alias sl=ls # often screw this up
+#alias la='ls -lAF'
+#alias lx='ls -lXB'
+#alias lk='ls -lSr'
+#alias lt='ls -lAFtr'
+#alias sl=ls # often screw this up
+
+# Change dir alias
+cd_and_ls() {
+    cd $1 && l
+}
+alias c='cd_and_ls'
+
+
+# Alias these dangerous command to prevent error
+alias cp='cp -i'
+alias mv='mv -i'
+alias rm='rm -I'
 
 # Show history
 alias history='fc -l 1'
 
-# Tmux 256 default
+# set Tmux default 256 color
 alias tmux='tmux -2'
 
-# vi as vim
-alias vi='vim'
-alias v='vim'
+# Editor configuration
+export EDITOR=vim
 if (( $+commands[nvim] )) ; then
-  alias v='nvim'
+    export EDITOR=nvim
 fi
+alias e="${EDITOR}"
+alias sudoe='sudoedit'
+
+# vi as vim
+#alias vi='vim'
+#alias v='vim'
+#if (( $+commands[nvim] )) ; then
+  #alias v='nvim'
+#fi
 
 # Directory Stack alias
 alias dirs='dirs -v'
-alias ds='dirs'
+alias d='dirs'
+
+# Bat (cat clone) alias
+alias v='bat'
+
+# IPython alias
+alias p='ipython'
 
 #############################
 # Completions
@@ -138,7 +222,7 @@ zstyle ':completion:*' select-prompt %SScrolling active: current selection at %p
 
 # Directory
 zstyle ':completion:*:cd:*' ignore-parents parent pwd
-export LS_COLORS='di=01;94:ln=01;96:ex=01;92'
+#export LS_COLORS='di=01;94:ln=01;96:ex=01;92'
 zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 
 # default: --
@@ -147,5 +231,5 @@ zstyle ':completion:*:manuals' separate-sections true
 
 # load custom settings
 if [[ -f "${HOME}/.zshrc.local" ]]; then
-  source "${HOME}/.zshrc.local"
+    source "${HOME}/.zshrc.local"
 fi

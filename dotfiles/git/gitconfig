@@ -16,3 +16,5 @@
 	helper = cache --timeout=86400
 [push]
 	default = tracking
+[core]
+	excludesfile = ~/.gitignore
